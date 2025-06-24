@@ -11,6 +11,8 @@
 # See GitHub page to report issues or to contribute:
 # https://github.com/Iksas/media-import-2
 
+import webbrowser
+
 try:
     from PyQt6 import QtCore, QtGui, QtWidgets
 except ImportError:
@@ -59,15 +61,17 @@ class Ui_Form(object):
         self.label_2 = QtWidgets.QLabel(Form)
         self.label_2.setObjectName("label_2")
         self.gridLayout.addWidget(self.label_2, 0, 3, 1, 1)
-        self.buttonBox = QtWidgets.QDialogButtonBox(Form)
 
+        self.buttonBox = QtWidgets.QDialogButtonBox(Form)
         try:
             self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
         except AttributeError:
             self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.StandardButton.Cancel|QtWidgets.QDialogButtonBox.StandardButton.Ok)
-
+        self.buttonBox.addButton("Help", QtWidgets.QDialogButtonBox.ButtonRole.HelpRole)
+        self.buttonBox.helpRequested.connect(self.open_help) # noqa
         self.buttonBox.setObjectName("buttonBox")
-        self.gridLayout.addWidget(self.buttonBox, 5, 3, 1, 1)
+        self.gridLayout.addWidget(self.buttonBox, 5, 0, 1, 4)
+
         self.fieldMapGrid = QtWidgets.QGridLayout()
         self.fieldMapGrid.setObjectName("fieldMapGrid")
         self.gridLayout.addLayout(self.fieldMapGrid, 2, 3, 1, 1)
@@ -88,3 +92,6 @@ class Ui_Form(object):
         self.label.setText(_translate("Form", "Select note type"))
         self.subDirLabel.setText(_translate("Form", "Include subfolders:"))
 
+    @staticmethod
+    def open_help(*_):
+        webbrowser.open("https://ankiweb.net/shared/info/129299120")
