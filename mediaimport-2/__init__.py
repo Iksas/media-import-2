@@ -239,7 +239,7 @@ class ImportSettingsDialog(QDialog):
                 continue
             cmb.addItem(actionText)
             if actionText in ACTION_TOOLTIPS:
-                cmb.setItemData(i, ACTION_TOOLTIPS[actionText], QtCore.Qt.ItemDataRole.ToolTipRole)
+                cmb.setItemData(cmb.count()-1, ACTION_TOOLTIPS[actionText], QtCore.Qt.ItemDataRole.ToolTipRole)
 
         # piggyback the special flag on QLabel
         lbl.special = special
