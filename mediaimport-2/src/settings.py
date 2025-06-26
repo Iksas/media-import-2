@@ -27,7 +27,7 @@
 #
 #
 # Usage example:
-#     from .settings import settings, initializeSettings, saveSettings
+#     from .src.settings import settings, initializeSettings, saveSettings
 #     initializeSettings()        # initialize the settings dictionary
 #     settings["example"] = 42    # modify the settings dictionary
 #     saveSettings()              # save the changes to disk

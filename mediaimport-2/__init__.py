@@ -23,7 +23,7 @@ try:
 except ImportError:
     from PyQt5 import QtCore
 
-from . import dialog
+from .src import dialog
 
 # Support the same media types as the Editor
 AUDIO = editor.audio
