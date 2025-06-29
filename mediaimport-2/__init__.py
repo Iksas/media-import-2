@@ -264,6 +264,19 @@ class ImportSettingsDialog(QDialog):
                 QSpacerItem(0, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding), row, 0,
             )
 
+    def fieldSettingChangedCallback(self, field, setting):
+        """
+        Callback that stores changed field settings in the sessionSettings dicionary
+
+        :param field: The field name (str or Action)
+        :param setting: The field text selected by the user
+        :return: None
+        """
+        noteType = self.form.modelList.currentItem().model["name"]
+        if noteType not in self.sessionSettings:
+            self.sessionSettings[noteType] = {}
+        self.sessionSettings[noteType][field] = setting
+
     def createRow(self, name, idx, special=False):
         lbl = QLabel(name)
         cmb = QComboBox(None)
@@ -276,6 +289,9 @@ class ImportSettingsDialog(QDialog):
             cmb.addItem(action)
             if action in ACTION_TOOLTIPS:
                 cmb.setItemData(cmb.count()-1, ACTION_TOOLTIPS[action], QtCore.Qt.ItemDataRole.ToolTipRole)
+
+        # Register a callback function for combobox index changes
+        cmb.currentTextChanged.connect(lambda setting, field=name: self.fieldSettingChangedCallback(field, setting))
 
         # piggyback the special flag on QLabel
         lbl.special = special
