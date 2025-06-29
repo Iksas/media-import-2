@@ -62,6 +62,7 @@ class Ui_Form(object):
         self.label_2.setObjectName("label_2")
         self.gridLayout.addWidget(self.label_2, 0, 3, 1, 1)
 
+        # The button row at the bottom ("Help", "Cancel" and "OK")
         self.buttonBox = QtWidgets.QDialogButtonBox(Form)
         try:
             self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)

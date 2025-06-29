@@ -12,6 +12,7 @@
 # https://github.com/Iksas/media-import-2
 
 import time
+from enum import Enum
 
 from aqt import editor, mw
 from aqt.utils import tooltip
@@ -30,30 +31,29 @@ AUDIO = editor.audio
 IMAGE = editor.pics
 
 # Possible field mappings
-ACTIONS = [
-    "",
-    "Media",
-    "File Name",
-    "File Name (full)",
-    "Extension",
-    "Extension (case-sensitive)",
-    "Sequence",
-    "Subfolder tags (individual)",
-    "Subfolder tag (hierarchical)"
-]
+class Actions(str, Enum):
+    nothing = ""
+    media = "Media"
+    file_name = "File Name"
+    file_name_full = "File Name (full)"
+    extension = "Extension"
+    extension_case_sensitive = "Extension (case-sensitive)"
+    sequence = "Sequence"
+    folder_tags_individual = "Subfolder tags (individual)"
+    folder_tags_hierarchical = "Subfolder tag (hierarchical)"
+
 
 # Tooltips for the dropdown menu
-# TODO: Don't use string literals as keys
 ACTION_TOOLTIPS = {
-    "": "Nothing",
-    "Media": "The media file\n(image / audio etc.)",
-    "File Name": 'The file name without extension\n(e.g. "image.JPG" -> "image")',
-    "File Name (full)": 'The file name with extension\n(e.g. "image.JPG" -> "image.JPG")',
-    "Extension": 'The lower-case file extension\n(e.g. "image.JPG" -> "jpg")',
-    "Extension (case-sensitive)": 'The file extension\n(e.g. "image.JPG" -> "JPG")',
-    "Sequence": 'An increasing number\n("0", "1", "2", ...)',
-    "Subfolder tags (individual)": 'Creates one tag for each subfolder\n(e.g. "./f1/f2/f3/image.JPG" -> [f1] [f2] [f3])',
-    "Subfolder tag (hierarchical)": 'Creates a single tag from the subfolder path\n(e.g. "./f1/f2/f3/image.JPG" -> [f1::f2::f3])',
+    Actions.nothing: "Nothing",
+    Actions.media: "The media file\n(image / audio etc.)",
+    Actions.file_name: 'The file name without extension\n(e.g. "image.JPG" -> "image")',
+    Actions.file_name_full: 'The file name with extension\n(e.g. "image.JPG" -> "image.JPG")',
+    Actions.extension: 'The lower-case file extension\n(e.g. "image.JPG" -> "jpg")',
+    Actions.extension_case_sensitive: 'The file extension\n(e.g. "image.JPG" -> "JPG")',
+    Actions.sequence: 'An increasing number\n("0", "1", "2", ...)',
+    Actions.folder_tags_individual: 'Creates one tag for each subfolder\n(e.g. "./f1/f2/f3/image.JPG" -> [f1] [f2] [f3])',
+    Actions.folder_tags_hierarchical: 'Creates a single tag from the subfolder path\n(e.g. "./f1/f2/f3/image.JPG" -> [f1::f2::f3])',
 }
 
 # Note items that we can import into that are not note fields
@@ -95,32 +95,32 @@ def doMediaImport():
             # Add the file to the media collection and get its name
             internalFileName = mw.col.media.add_file(filePath)
             # Now we populate each field according to the mapping selected
-            for field, actionText, special in fieldList:
-                if actionText == "":
+            for field, action, special in fieldList:
+                if action == Actions.nothing:
                     continue
-                elif actionText == "Media":
+                elif action == Actions.media:
                     if ext in AUDIO:
                         data = "[sound:%s]" % internalFileName
                     elif ext in IMAGE:
                         data = '<img src="%s">' % internalFileName
                     else:
                         continue
-                elif actionText == "File Name":
+                elif action == Actions.file_name:
                     data = mediaName
-                elif actionText == "File Name (full)":
+                elif action == Actions.file_name_full:
                     data = fileName
-                elif actionText == "Extension":
+                elif action == Actions.extension:
                     data = ext
-                elif actionText == "Extension (case-sensitive)":
+                elif action == Actions.extension_case_sensitive:
                     data = os.path.splitext(mediaName)[1][1:]
-                elif actionText == "Sequence":
+                elif action == Actions.sequence:
                     data = str(i)
-                elif actionText == "Subfolder tags (individual)":
+                elif action == Actions.folder_tags_individual:
                     relative_path = os.path.relpath(root, path)
                     data = relative_path.split(os.sep)
                     if "." in data:
                         data.remove(".")
-                elif actionText == "Subfolder tag (hierarchical)":
+                elif action == Actions.folder_tags_hierarchical:
                     relative_path = os.path.relpath(root, path)
                     data = relative_path.split(os.sep)
                     if "." in data:
@@ -214,6 +214,7 @@ class ImportSettingsDialog(QDialog):
             self.createRow(name, row, special=True)
             row += 1
 
+        # Add a flexible spacer below the dropdown menus
         self.fieldCount = row
         try:
             self.form.fieldMapGrid.addItem(
@@ -221,11 +222,7 @@ class ImportSettingsDialog(QDialog):
             )
         except AttributeError:
             self.form.fieldMapGrid.addItem(
-                QSpacerItem(
-                    0, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding
-                ),
-                row,
-                0,
+                QSpacerItem(0, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding), row, 0,
             )
 
     def createRow(self, name, idx, special=False):
@@ -233,18 +230,20 @@ class ImportSettingsDialog(QDialog):
         cmb = QComboBox(None)
 
         # Add the actions to the dropdown menu, and add tooltips
-        for i, actionText in enumerate(ACTIONS):
+        for action in Actions:
             # Tags cannot store media
-            if name == "Tags" and actionText == "Media":
+            if name == "Tags" and action == Actions.media:
                 continue
-            cmb.addItem(actionText)
-            if actionText in ACTION_TOOLTIPS:
-                cmb.setItemData(cmb.count()-1, ACTION_TOOLTIPS[actionText], QtCore.Qt.ItemDataRole.ToolTipRole)
+            cmb.addItem(action)
+            if action in ACTION_TOOLTIPS:
+                cmb.setItemData(cmb.count()-1, ACTION_TOOLTIPS[action], QtCore.Qt.ItemDataRole.ToolTipRole)
 
         # piggyback the special flag on QLabel
         lbl.special = special
         self.form.fieldMapGrid.addWidget(lbl, idx, 0)
         self.form.fieldMapGrid.addWidget(cmb, idx, 1)
+
+        # Set the currently selected field content
         if idx == 0:
             cmb.setCurrentIndex(1)
         if idx == 1:
