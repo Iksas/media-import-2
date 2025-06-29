@@ -24,6 +24,7 @@ try:
 except ImportError:
     from PyQt5 import QtCore
 
+from .src.settings import settings, initializeSettings, saveSettings
 from .src import dialog
 
 # Support the same media types as the Editor
@@ -59,10 +60,10 @@ ACTION_TOOLTIPS = {
 # Note items that we can import into that are not note fields
 SPECIAL_FIELDS = ["Tags"]
 
-# Stores the recent path for the file picker
-MEDIA_IMPORT_2_RECENT_PATH = os.path.expanduser("~")
 
 def doMediaImport():
+    initializeSettings()
+
     # Raise the main dialog for the add-on and retrieve its result when closed.
     (path, recursive, model, fieldList, ok) = ImportSettingsDialog().getDialogResult()
     if not ok:
@@ -161,6 +162,13 @@ def doMediaImport():
 
 class ImportSettingsDialog(QDialog):
     def __init__(self):
+        # The path to the media folder chosen by user
+        if os.path.isdir(settings["loadFolder"]):
+            self.mediaDir = settings["loadFolder"]
+        else:
+            self.mediaDir = os.path.expanduser("~")
+            settings["loadFolder"] = self.mediaDir
+
         QDialog.__init__(self, mw)
         self.form = dialog.Ui_Form()
         self.form.setupUi(self)
@@ -168,8 +176,6 @@ class ImportSettingsDialog(QDialog):
         self.form.buttonBox.rejected.connect(self.reject)
         self.form.browse.clicked.connect(self.onBrowse)
         self.form.recursiveCheckbox.clicked.connect(self.recursiveCheckboxClicked)
-        # The path to the media folder chosen by user
-        self.mediaDir = None
         self.recursive = True # TODO: remember this setting
         # The number of fields in the note type we are using
         self.fieldCount = 0
@@ -229,13 +235,17 @@ class ImportSettingsDialog(QDialog):
             row += 1
         self.fieldCount = row
 
+        transientSettings = {}
+        if noteType in settings["fieldSettings"]:
+            transientSettings = settings["fieldSettings"][noteType]
+
         # Merge stored field settings with the default settings
         fieldSessionSettings = {}
         if noteType in self.sessionSettings:
             fieldSessionSettings = self.sessionSettings[noteType]
 
         # See https://stackoverflow.com/a/26853961
-        fieldSettings = {**self.defaultSettings, **fieldSessionSettings}
+        fieldSettings = {**self.defaultSettings, **transientSettings, **fieldSessionSettings}
 
         # Apply stored field settings
         for i in range(self.fieldCount):
@@ -330,14 +340,10 @@ class ImportSettingsDialog(QDialog):
 
     def onBrowse(self):
         """Show the file picker."""
-        global MEDIA_IMPORT_2_RECENT_PATH
-
-        path = QFileDialog.getExistingDirectory(mw, caption="Import Folder", directory=MEDIA_IMPORT_2_RECENT_PATH)
+        path = QFileDialog.getExistingDirectory(mw, caption="Import Folder", directory=self.mediaDir)
         if not path:
             return
         self.mediaDir = path
-        # store the parent directory of the recently selected folder
-        MEDIA_IMPORT_2_RECENT_PATH = os.path.abspath(os.path.join(path, os.pardir))
         self.form.mediaDir.setText(self.mediaDir)
         self.form.mediaDir.setStyleSheet("")
 
@@ -350,6 +356,25 @@ class ImportSettingsDialog(QDialog):
         if not self.mediaDir:
             self.form.mediaDir.setStyleSheet("border: 1px solid red")
             return
+
+        # The dialog will be accepted.
+        # Store the settings of the current field type to disk.
+        noteType = self.form.modelList.currentItem().model["name"]
+
+        transientSettings = {}
+        for i in range(self.fieldCount):
+            lbl: QLabel
+            cmb: QComboBox
+            lbl = self.form.fieldMapGrid.itemAtPosition(i, 0).widget()
+            cmb = self.form.fieldMapGrid.itemAtPosition(i, 1).widget()
+
+            fieldName = lbl.text()
+            fieldSetting = cmb.currentText()
+            transientSettings[fieldName] = fieldSetting
+        settings["fieldSettings"][noteType] = transientSettings
+        settings["loadFolder"] = self.mediaDir
+        saveSettings()
+
         QDialog.accept(self)
 
     def clearLayout(self, layout):

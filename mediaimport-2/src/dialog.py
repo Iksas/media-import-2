@@ -18,6 +18,8 @@ try:
 except ImportError:
     from PyQt5 import QtCore, QtGui, QtWidgets
 
+from .settings import settings
+
 
 class Ui_Form(object):
     def setupUi(self, Form):
@@ -33,6 +35,7 @@ class Ui_Form(object):
         self.mediaDir = QtWidgets.QLineEdit(Form)
         self.mediaDir.setEnabled(False)
         self.mediaDir.setObjectName("mediaDir")
+        self.mediaDir.setText(settings["loadFolder"])
         self.topGridLayout.addWidget(self.mediaDir, 0, 1)
         self.browse = QtWidgets.QPushButton(Form)
         self.browse.setObjectName("browse")
