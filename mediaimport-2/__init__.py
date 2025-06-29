@@ -176,7 +176,7 @@ class ImportSettingsDialog(QDialog):
         self.form.buttonBox.rejected.connect(self.reject)
         self.form.browse.clicked.connect(self.onBrowse)
         self.form.recursiveCheckbox.clicked.connect(self.recursiveCheckboxClicked)
-        self.recursive = True # TODO: remember this setting
+        self.recursive = settings["includeSubfolders"]
         # The number of fields in the note type we are using
         self.fieldCount = 0
 
@@ -373,6 +373,7 @@ class ImportSettingsDialog(QDialog):
             transientSettings[fieldName] = fieldSetting
         settings["fieldSettings"][noteType] = transientSettings
         settings["loadFolder"] = self.mediaDir
+        settings["includeSubfolders"] = self.recursive
         saveSettings()
 
         QDialog.accept(self)

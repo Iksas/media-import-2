@@ -44,7 +44,7 @@ class Ui_Form(object):
         self.subDirLabel.setToolTip("Include media files located in subfolders")
         self.topGridLayout.addWidget(self.subDirLabel, 1, 0)
         self.recursiveCheckbox = QtWidgets.QCheckBox(Form)
-        self.recursiveCheckbox.setChecked(True)
+        self.recursiveCheckbox.setChecked(settings["includeSubfolders"])
         self.recursiveCheckbox.setObjectName("recursive")
         self.recursiveCheckbox.setToolTip("Include media files located in subfolders")
         self.topGridLayout.addWidget(self.recursiveCheckbox, 1, 1)

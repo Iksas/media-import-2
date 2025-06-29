@@ -62,6 +62,7 @@ class TransientSettings:
     """
     # The most recent media import folder used by the user
     loadFolder: str = os.path.expanduser("~")
+    includeSubfolders: bool = True
     # For each note type, the most recently used field configurations will be stored
     # in the fieldSettings dictionary.
     # It is structured like this: {Note type -> {Field name -> Configuration}}
