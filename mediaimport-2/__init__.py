@@ -170,9 +170,20 @@ class ImportSettingsDialog(QDialog):
         self.form.recursiveCheckbox.clicked.connect(self.recursiveCheckboxClicked)
         # The path to the media folder chosen by user
         self.mediaDir = None
-        self.recursive = True
+        self.recursive = True # TODO: remember this setting
         # The number of fields in the note type we are using
         self.fieldCount = 0
+
+        # Temporarily stores the field settings for each note type
+        # the user edits in the current session.
+        # Will not be stored to disk. Only the field settings the user actually
+        # uses when starting a media import will be stored to disk.
+        self.sessionSettings = {}
+        # When no field settings exist for a note type, this default is used
+        self.defaultSettings = {"Front": Actions.media, "Image": Actions.media,
+                                "Back": Actions.file_name, "Back Extra": Actions.file_name,
+                                "Text": Actions.file_name}
+
         self.populateModelList()
         try:
             self.exec_()
@@ -181,6 +192,7 @@ class ImportSettingsDialog(QDialog):
 
     def populateModelList(self):
         """Fill in the list of available note types to select from."""
+        # TODO: Use the native note type picker instead
         models = mw.col.models.all()
         for m in models:
             item = QListWidgetItem(m["name"])
@@ -188,11 +200,12 @@ class ImportSettingsDialog(QDialog):
             item.model = m
             self.form.modelList.addItem(item)
         self.form.modelList.sortItems()
-        self.form.modelList.currentRowChanged.connect(self.populateFieldGrid)
+
+        self.form.modelList.currentRowChanged.connect(self.noteTypeChangedCallback)
         # Triggers a selection so the fields will be populated
         self.form.modelList.setCurrentRow(0)
 
-    def populateFieldGrid(self):
+    def noteTypeChangedCallback(self):
         """Fill in the fieldMapGrid QGridLayout.
 
         Each row in the grid contains two columns:
@@ -202,6 +215,7 @@ class ImportSettingsDialog(QDialog):
         special cases for rows 0 and 1. The final row is a spacer."""
 
         self.clearLayout(self.form.fieldMapGrid)
+        noteType = self.form.modelList.currentItem().model["name"]
 
         # Add note fields to grid
         row = 0
@@ -213,9 +227,34 @@ class ImportSettingsDialog(QDialog):
         for name in SPECIAL_FIELDS:
             self.createRow(name, row, special=True)
             row += 1
+        self.fieldCount = row
+
+        # Merge stored field settings with the default settings
+        fieldSessionSettings = {}
+        if noteType in self.sessionSettings:
+            fieldSessionSettings = self.sessionSettings[noteType]
+
+        # See https://stackoverflow.com/a/26853961
+        fieldSettings = {**self.defaultSettings, **fieldSessionSettings}
+
+        # Apply stored field settings
+        for i in range(self.fieldCount):
+            lbl: QLabel
+            cmb: QComboBox
+            lbl = self.form.fieldMapGrid.itemAtPosition(i, 0).widget()
+            cmb = self.form.fieldMapGrid.itemAtPosition(i, 1).widget()
+
+            fieldName = lbl.text()
+            if fieldName not in fieldSettings:
+                # This field doesn't have a stored setting
+                continue
+
+            fieldSetting = fieldSettings[fieldName]
+            settingsIndex = cmb.findText(fieldSetting)
+            if settingsIndex >= 0:
+                cmb.setCurrentIndex(settingsIndex)
 
         # Add a flexible spacer below the dropdown menus
-        self.fieldCount = row
         try:
             self.form.fieldMapGrid.addItem(
                 QSpacerItem(0, 0, QSizePolicy.Minimum, QSizePolicy.Expanding), row, 0
@@ -242,12 +281,6 @@ class ImportSettingsDialog(QDialog):
         lbl.special = special
         self.form.fieldMapGrid.addWidget(lbl, idx, 0)
         self.form.fieldMapGrid.addWidget(cmb, idx, 1)
-
-        # Set the currently selected field content
-        if idx == 0:
-            cmb.setCurrentIndex(1)
-        if idx == 1:
-            cmb.setCurrentIndex(2)
 
     def getDialogResult(self):
         """Return a tuple containing the user-defined settings to follow
