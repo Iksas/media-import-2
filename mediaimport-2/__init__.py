@@ -12,6 +12,7 @@
 # https://github.com/Iksas/media-import-2
 
 import time
+import re
 from enum import Enum
 
 from aqt import editor, mw
@@ -35,6 +36,7 @@ IMAGE = editor.pics
 class Actions(str, Enum):
     nothing = ""
     media = "Media"
+    media_2 = "Media_2"
     file_name = "File Name"
     file_name_full = "File Name (full)"
     extension = "Extension"
@@ -48,6 +50,7 @@ class Actions(str, Enum):
 ACTION_TOOLTIPS = {
     Actions.nothing: "Nothing",
     Actions.media: "The media file\n(image / audio etc.)",
+    Actions.media_2: 'The secondary media file\nThis file is denoted by a suffix ("_2" by default).\ne.g. primary file: "image.jpg" -> secondary file: "image_2.jpg"',
     Actions.file_name: 'The file name without extension\n(e.g. "image.JPG" -> "image")',
     Actions.file_name_full: 'The file name with extension\n(e.g. "image.JPG" -> "image.JPG")',
     Actions.extension: 'The lower-case file extension\n(e.g. "image.JPG" -> "jpg")',
@@ -73,6 +76,12 @@ def doMediaImport():
     # Get the MediaImport deck id (auto-created if it doesn't exist)
     did = mw.col.decks.id("MediaImport")
 
+    # Check if secondary media files are used at all
+    file_pairs_used = False
+    for _, action, _ in fieldList:
+        if action == Actions.media_2:
+            file_pairs_used = True
+
     # Walk through the entire directory tree
     newCount = 0
     failure = False
@@ -84,6 +93,69 @@ def doMediaImport():
         if not recursive:
             dirs[:] = []
 
+        # Index primary and secondary files in this folder
+        file_pair_suffix = settings["secondImageSuffix"]
+        # This dict maps from file names to file names with extensions
+        # For example: "image" -> "image.jpg"
+        # This avoids a nested loop, and ensures a run time of = O(n*log(n)).
+        file_ending_index = {}
+        # The two lists will be used to temporarily store file names without extensions.
+        primary_media = []
+        secondary_media = []
+        # Stores if a certain secondary media name has been matched
+        # e.g. "image_2" -> True
+        secondary_media_matched = {}
+        # This dict will map from full primary file names to full secondary file names.
+        # e.g. "image.jpg" -> "image_2.png"
+        # It will be used by the card creation loop.
+        file_pair_index = {}
+        if file_pairs_used:
+            for fileName in files:
+                # Populate the file ending index
+                mediaName, ext = os.path.splitext(fileName)
+                ext = ext[1:].lower()
+                if ext is None or ext not in AUDIO + IMAGE:
+                    # Skip files with no extension and non-media files
+                    continue
+                # TODO: abort on duplicate media names
+                file_ending_index[mediaName] = fileName
+
+                # Mark all trivial primary files as primary files
+                # This includes all file names that don't end in the file_pair_suffix
+                if re.search(f".{re.escape(file_pair_suffix)}$", mediaName, re.MULTILINE):
+                    secondary_media.append(mediaName)
+                else:
+                    primary_media.append(mediaName)
+
+            # Match all trivial primary files with their secondary files
+            for pf in primary_media:
+                primary_filename = file_ending_index[pf]
+                # TODO: abort on nonexistent secondary file
+                secondary_filename = file_ending_index[pf + file_pair_suffix]
+
+                file_pair_index[primary_filename] = secondary_filename
+                secondary_media_matched[pf + file_pair_suffix] = True
+
+            # Match previously unmatched secondary media with each other
+            # e.g. this matches the media "image_2" with "image_2_2"
+            #
+            # The following steps are taken:
+            # - Sort the secondary media names, so that shorter media names are checked first
+            # - For each sorted secondary media name:
+            #   - Check if the name has been matched
+            #   - If not, try to match it
+            secondary_media.sort(key=len)
+            for pf in secondary_media:
+                if pf not in secondary_media_matched:
+                    primary_filename = file_ending_index[pf]
+                    # TODO: abort on nonexistent secondary file
+                    secondary_filename = file_ending_index[pf + file_pair_suffix]
+
+                    file_pair_index[primary_filename] = secondary_filename
+                    secondary_media_matched[pf + file_pair_suffix] = True
+
+            files = list(file_pair_index.keys())
+
         for i, fileName in enumerate(files):
             note = notes.Note(mw.col, model)
             note.note_type()["did"] = did
@@ -93,8 +165,14 @@ def doMediaImport():
             if ext is None or ext not in AUDIO + IMAGE:
                 # Skip files with no extension and non-media files
                 continue
-            # Add the file to the media collection and get its name
+
+            # Add the file(s) to the media collection and get its name
             internalFileName = mw.col.media.add_file(filePath)
+            internalFileName_2 = ""
+            if file_pairs_used:
+                filePath_2 = os.path.join(root, file_pair_index[fileName])
+                internalFileName_2 = mw.col.media.add_file(filePath_2)
+
             # Now we populate each field according to the mapping selected
             for field, action, special in fieldList:
                 if action == Actions.nothing:
@@ -104,6 +182,13 @@ def doMediaImport():
                         data = "[sound:%s]" % internalFileName
                     elif ext in IMAGE:
                         data = '<img src="%s">' % internalFileName
+                    else:
+                        continue
+                elif action == Actions.media_2:
+                    if ext in AUDIO:
+                        data = "[sound:%s]" % internalFileName_2
+                    elif ext in IMAGE:
+                        data = '<img src="%s">' % internalFileName_2
                     else:
                         continue
                 elif action == Actions.file_name:
@@ -371,6 +456,7 @@ class ImportSettingsDialog(QDialog):
             fieldName = lbl.text()
             fieldSetting = cmb.currentText()
             transientSettings[fieldName] = fieldSetting
+        # TODO: store the settings immediately after an import operation is started
         settings["fieldSettings"][noteType] = transientSettings
         settings["loadFolder"] = self.mediaDir
         settings["includeSubfolders"] = self.recursive
