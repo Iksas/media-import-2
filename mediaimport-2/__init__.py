@@ -117,7 +117,15 @@ def doMediaImport():
                 if ext is None or ext not in AUDIO + IMAGE:
                     # Skip files with no extension and non-media files
                     continue
-                # TODO: abort on duplicate media names
+                # Abort on duplicate media names
+                if mediaName in file_ending_index:
+                    # For example, this error is triggered if the files "name.jpg" and
+                    # "name.png" exist in the SAME folder.
+                    firstExtension = file_ending_index[mediaName].replace(mediaName, "")
+                    secondExtension = fileName.replace(mediaName, "")
+                    mw.progress.finish()
+                    showMediaNameDuplicateError(root, mediaName, firstExtension, secondExtension)
+                    return
                 file_ending_index[mediaName] = fileName
 
                 # Mark all trivial primary files as primary files
@@ -130,7 +138,14 @@ def doMediaImport():
             # Match all trivial primary files with their secondary files
             for pf in primary_media:
                 primary_filename = file_ending_index[pf]
-                # TODO: abort on nonexistent secondary file
+                # Abort on nonexistent secondary file
+                if pf + file_pair_suffix not in file_ending_index:
+                    # For example, this error is triggered if the files "name.jpg" exists,
+                    # and no file "image_2.YXZ" exists in the same folder.
+                    mediaExtension = file_ending_index[pf].replace(pf, "")
+                    mw.progress.finish()
+                    showSecondaryMediaMissingError(root, pf, mediaExtension, pf + file_pair_suffix)
+                    return
                 secondary_filename = file_ending_index[pf + file_pair_suffix]
 
                 file_pair_index[primary_filename] = secondary_filename
@@ -148,7 +163,14 @@ def doMediaImport():
             for pf in secondary_media:
                 if pf not in secondary_media_matched:
                     primary_filename = file_ending_index[pf]
-                    # TODO: abort on nonexistent secondary file
+                    # Abort on nonexistent secondary file
+                    if pf + file_pair_suffix not in file_ending_index:
+                        # For example, this error is triggered if the files "name.jpg" exists,
+                        # and no file "image_2.YXZ" exists in the same folder.
+                        mediaExtension = file_ending_index[pf].replace(pf, "")
+                        mw.progress.finish()
+                        showSecondaryMediaMissingError(root, pf, mediaExtension, pf + file_pair_suffix)
+                        return
                     secondary_filename = file_ending_index[pf + file_pair_suffix]
 
                     file_pair_index[primary_filename] = secondary_filename
@@ -425,7 +447,7 @@ class ImportSettingsDialog(QDialog):
 
     def onBrowse(self):
         """Show the file picker."""
-        path = QFileDialog.getExistingDirectory(mw, caption="Import Folder", directory=self.mediaDir)
+        path = QFileDialog.getExistingDirectory(mw, caption="Import Folder", directory=self.mediaDir) # noqa
         if not path:
             return
         self.mediaDir = path
@@ -499,6 +521,54 @@ def showFailureDialog():
 Failed to generate cards and no media files were imported. Please ensure the
 note type you selected is able to generate cards by using a valid
 <a href="https://docs.ankiweb.net/templates/intro.html">card template</a>.
+</p>
+""",
+    )
+
+
+def showMediaNameDuplicateError(rootFolder: str, mediaName: str, firstExtension: str, secondExtension: str):
+    QMessageBox.critical(
+        mw,
+        "Media Import Failure",
+        f"""
+<p>
+The import cannot continue because two files in the same folder are using the
+file name <code style="color: red;">{mediaName}</code>:
+</p>
+<ul>
+<li><code>{rootFolder}{os.sep}<span style="color: red;">{mediaName}</span>{firstExtension}</code></li>
+<li><code>{rootFolder}{os.sep}<span style="color: red;">{mediaName}</span>{secondExtension}</code></li>
+</ul>
+<p>
+When using the <code>Media_2</code> field option, the file names (without extension) must be unique in each folder.
+</p>
+""",
+    )
+
+
+def showSecondaryMediaMissingError(rootFolder: str, mediaName: str, mediaExtension: str, mediaName_2: str):
+    QMessageBox.critical(
+        mw,
+        "Media Import Failure",
+        f"""
+<p>
+The import cannot continue. In the media folder, there is the following file:
+</p>
+<ul>
+<li><code>{rootFolder}{os.sep}<span style="color: green;">{mediaName}</span>{mediaExtension}</code></li>
+</ul>
+<p>But no matching secondary file can be found:</p>
+<ul>
+<li><code>{rootFolder}{os.sep}<span style="color: red;">{mediaName}{settings["secondImageSuffix"]}</span>.XYZ</code></li>
+</ul>
+<p>
+When using the <code>Media_2</code> field option, for every media file there must be a
+secondary media file in the same folder.
+</p>
+<p>
+If necessary, you can adjust the suffix of the secondary file (<span style="color: red;">
+{settings["secondImageSuffix"]}</span>) in the settings. To open them, go to <i>Tools -> Addons</i> and
+double-click on <i>Media Import 2</i>.
 </p>
 """,
     )
