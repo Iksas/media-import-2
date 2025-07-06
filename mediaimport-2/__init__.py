@@ -386,7 +386,7 @@ class ImportSettingsDialog(QDialog):
                 cmb.setItemData(cmb.count()-1, ACTION_TOOLTIPS[action], QtCore.Qt.ItemDataRole.ToolTipRole)
 
         # Register a callback function for combobox index changes
-        cmb.currentTextChanged.connect(lambda setting, field=name: self.fieldSettingChangedCallback(field, setting))
+        cmb.currentTextChanged.connect(lambda setting, field=name: self.fieldSettingChangedCallback(field, setting)) # noqa
 
         # piggyback the special flag on QLabel
         lbl.special = special
@@ -446,7 +446,7 @@ class ImportSettingsDialog(QDialog):
         # Store the settings of the current field type to disk.
         noteType = self.form.modelList.currentItem().model["name"]
 
-        transientSettings = {}
+        fieldSettings = {}
         for i in range(self.fieldCount):
             lbl: QLabel
             cmb: QComboBox
@@ -455,9 +455,8 @@ class ImportSettingsDialog(QDialog):
 
             fieldName = lbl.text()
             fieldSetting = cmb.currentText()
-            transientSettings[fieldName] = fieldSetting
-        # TODO: store the settings immediately after an import operation is started
-        settings["fieldSettings"][noteType] = transientSettings
+            fieldSettings[fieldName] = fieldSetting
+        settings["fieldSettings"][noteType] = fieldSettings
         settings["loadFolder"] = self.mediaDir
         settings["includeSubfolders"] = self.recursive
         saveSettings()
