@@ -97,7 +97,7 @@ def doMediaImport():
             dirs[:] = []
 
         # Index primary and secondary files in this folder
-        file_pair_suffix = settings["secondImageSuffix"]
+        file_pair_suffix = settings["secondMediaSuffix"]
         # This dict maps from file names to file names with extensions
         # For example: "image" -> "image.jpg"
         # This avoids a nested loop, and ensures a run time of = O(n*log(n)).
@@ -564,7 +564,7 @@ The import cannot continue. In the media folder, there is the following file:
 </ul>
 <p>But no matching secondary file can be found:</p>
 <ul>
-<li><code>{rootFolder}{os.sep}<span style="color: red;">{mediaName}{settings["secondImageSuffix"]}</span>.XYZ</code></li>
+<li><code>{rootFolder}{os.sep}<span style="color: red;">{mediaName}{settings["secondMediaSuffix"]}</span>.XYZ</code></li>
 </ul>
 <p>
 When using the <code>Media_2</code> field option, for every media file there must be a
@@ -572,7 +572,7 @@ secondary media file in the same folder.
 </p>
 <p>
 If necessary, you can adjust the suffix of the secondary file (<span style="color: red;">
-{settings["secondImageSuffix"]}</span>) in the settings. To open them, go to <i>Tools -> Addons</i> and
+{settings["secondMediaSuffix"]}</span>) in the settings. To open them, go to <i>Tools -> Addons</i> and
 double-click on <i>Media Import 2</i>.
 </p>
 """,

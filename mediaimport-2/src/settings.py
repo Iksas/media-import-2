@@ -74,8 +74,8 @@ class DefaultSettings:
     """
     Defines settings that are directly accessible to the user
     """
-    # The suffix used to identify secondary images
-    secondImageSuffix: str = "_2"
+    # The suffix used to identify secondary media files
+    secondMediaSuffix: str = "_2"
     # Enables the file extension actions
     showExtensionActions: bool = False
 
