@@ -60,7 +60,10 @@ ACTION_TOOLTIPS = {
     Actions.folder_tags_hierarchical: 'Creates a single tag from the subfolder path\n(e.g. "./f1/f2/f3/image.JPG" -> [f1::f2::f3])',
 }
 
-# Note items that we can import into that are not note fields
+# These actions are not displayed unless the user enables them in the settings
+EXTENSION_ACTIONS = [Actions.extension, Actions.extension_case_sensitive]
+
+# Tags can only contain strings, not media files
 SPECIAL_FIELDS = ["Tags"]
 
 
@@ -402,6 +405,8 @@ class ImportSettingsDialog(QDialog):
         for action in Actions:
             # Tags cannot store media
             if name == "Tags" and action in (Actions.media, Actions.media_2):
+                continue
+            if action in EXTENSION_ACTIONS and not settings["showExtensionActions"]:
                 continue
             cmb.addItem(action)
             if action in ACTION_TOOLTIPS:

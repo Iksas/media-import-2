@@ -76,6 +76,8 @@ class DefaultSettings:
     """
     # The suffix used to identify secondary images
     secondImageSuffix: str = "_2"
+    # Enables the file extension actions
+    showExtensionActions: bool = False
 
 
 def initializeSettings():

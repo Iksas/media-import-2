@@ -32,12 +32,13 @@ Here is a list of the content available to insert into fields (with an example f
 - **Media_2** - A second media file in the *same folder* that has the *same file name followed by a suffix* (`_2` by default). File extensions are ignored. For example, for the file `apple.JPG`, the secondary file could be called `apple_2.png`. The suffix `_2` can be changed in the settings (`Tools` -> `Add-ons` -> double-click on `Media Import 2`).
 - **File Name** - The name of the file without the extension (`apple`)
 - **File Name (full)** - The name of the file including the extension (`apple.JPG`)
-- **Extension** - Only the lower-case extension of the file (`jpg`)
-- **Extension (case-sensitive)** - Only the original extension of the file (`JPG`)
 - **Sequence** - A number indicating the order in which the file was imported. If 15 files were imported, each file will contain a value starting from 0 to 14. Always starts over from 0 for each import.
 - **Subfolder tags (individual)** - Creates separate tags for each subfolder (`f1` and `f2`). If this option is used in a non-tag field, the names are combined with spaces (`t1 t2`). Requires the "Include subfolders" checkbox to be active.
 - **Subfolder tag (hierarchical)** - Creates a single, hierarchical tag for the subfolder hierarchy (`t1::t2`). Requires the "Include subfolders" checkbox to be active.
 
+The following options are hidden unless the `showExtensionActions` setting is set to `true` (`Tools` -> `Add-ons` -> double-click on `Media Import 2`):
+- **Extension** - Only the lower-case extension of the file (`jpg`)
+- **Extension (case-sensitive)** - Only the original extension of the file (`JPG`)
 
 All new generated cards are added to a deck named `MediaImport`. This deck is created for you automatically if it doesn't exist.
 
