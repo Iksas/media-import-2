@@ -29,6 +29,7 @@ From this window, you are able to:
  
 Here is a list of the content available to insert into fields (with an example file located at `./f1/f2/apple.JPG`):
 - **Media** - The media file itself (image or audio will appear on the card)
+- **Media_2** - A second media file in the *same folder* that has the *same file name followed by a suffix* (`_2` by default). File extensions are ignored. For example, for the file `apple.JPG`, the secondary file could be called `apple_2.png`. The suffix `_2` can be changed in the settings (`Tools` -> `Add-ons` -> double-click on `Media Import 2`).
 - **File Name** - The name of the file without the extension (`apple`)
 - **File Name (full)** - The name of the file including the extension (`apple.JPG`)
 - **Extension** - Only the lower-case extension of the file (`jpg`)
