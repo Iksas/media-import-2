@@ -455,7 +455,7 @@ class ImportSettingsDialog(QDialog):
         path = QFileDialog.getExistingDirectory(mw, caption="Import Folder", directory=self.mediaDir) # noqa
         if not path:
             return
-        self.mediaDir = path
+        self.mediaDir = os.path.normpath(path)
         self.form.mediaDir.setText(self.mediaDir)
         self.form.mediaDir.setStyleSheet("")
 
