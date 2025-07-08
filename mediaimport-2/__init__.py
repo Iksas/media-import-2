@@ -89,8 +89,8 @@ def doMediaImport():
     # Walk through the entire directory tree
     newCount = 0
     failure = False
-    fileCount = sum([len(files) for _, _, files in os.walk(path)])
-    mw.progress.start(max=fileCount, parent=mw, immediate=True)
+    # TODO: Fix the progress bar or implement a spinner to be displayed instead
+    mw.progress.start(max=1, parent=mw, immediate=True)
 
     for root, dirs, files in os.walk(path):
         # Don't import subfolders if the user disabled them
@@ -257,7 +257,7 @@ def doMediaImport():
                 failure = True
                 break
             newCount += 1
-            mw.progress.update(value=newCount)
+            mw.progress.update(value=1)
         if failure:
             break
 
