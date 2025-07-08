@@ -13,6 +13,7 @@
 
 import time
 import re
+import platform
 from enum import Enum
 
 from aqt import editor, mw
@@ -532,17 +533,19 @@ note type you selected is able to generate cards by using a valid
 
 
 def showMediaNameDuplicateError(rootFolder: str, mediaName: str, firstExtension: str, secondExtension: str):
+    f = " font-weight: bold;" if platform.system() == "Windows" else ""
+
     QMessageBox.critical(
         mw,
         "Media Import Failure",
         f"""
 <p>
-The import cannot continue because two files in the same folder are using the
-file name <code style="color: red;">{mediaName}</code>:
+The import cannot be performed. Two files in the same folder are using the
+file name <code style="color: red;{f}">{mediaName}</code>:
 </p>
 <ul>
-<li><code>{rootFolder}{os.sep}<span style="color: red;">{mediaName}</span>{firstExtension}</code></li>
-<li><code>{rootFolder}{os.sep}<span style="color: red;">{mediaName}</span>{secondExtension}</code></li>
+<li><code>{rootFolder}{os.sep}<span style="color: red;{f}">{mediaName}</span>{firstExtension}</code></li>
+<li><code>{rootFolder}{os.sep}<span style="color: red;{f}">{mediaName}</span>{secondExtension}</code></li>
 </ul>
 <p>
 When using the <code>Media_2</code> field option, the file names (without extension) must be unique in each folder.
@@ -552,28 +555,30 @@ When using the <code>Media_2</code> field option, the file names (without extens
 
 
 def showSecondaryMediaMissingError(rootFolder: str, mediaName: str, mediaExtension: str, mediaName_2: str):
+    f = " font-weight: bold;" if platform.system() == "Windows" else ""
+
     QMessageBox.critical(
         mw,
         "Media Import Failure",
         f"""
 <p>
-The import cannot continue. In the media folder, there is the following file:
+The import cannot be performed. In the media folder, the following file exists:
 </p>
 <ul>
-<li><code>{rootFolder}{os.sep}<span style="color: green;">{mediaName}</span>{mediaExtension}</code></li>
+<li><code>{rootFolder}{os.sep}<span style="color: green;{f}">{mediaName}</span>{mediaExtension}</code></li>
 </ul>
 <p>But no matching secondary file can be found:</p>
 <ul>
-<li><code>{rootFolder}{os.sep}<span style="color: red;">{mediaName}{settings["secondMediaSuffix"]}</span>.XYZ</code></li>
+<li><code>{rootFolder}{os.sep}<span style="color: red;{f}">{mediaName}{settings["secondMediaSuffix"]}</span>.XYZ</code></li>
 </ul>
 <p>
 When using the <code>Media_2</code> field option, for every media file there must be a
 secondary media file in the same folder.
 </p>
 <p>
-If necessary, you can adjust the suffix of the secondary file (<span style="color: red;">
-{settings["secondMediaSuffix"]}</span>) in the settings. To open them, go to <i>Tools -> Addons</i> and
-double-click on <i>Media Import 2</i>.
+If necessary, you can adjust the suffix of the secondary file (<span style="color: red;{f}">
+{settings["secondMediaSuffix"]}</span>) in the settings (go to <i>Tools -> Addons</i> and
+double-click on <i>Media Import 2</i>).
 </p>
 """,
     )
