@@ -86,34 +86,39 @@ def doMediaImport():
         if action == Actions.media_2:
             file_pairs_used = True
 
-    # Walk through the entire directory tree
     newCount = 0
     failure = False
     # TODO: Fix the progress bar or implement a spinner to be displayed instead
     mw.progress.start(max=1, parent=mw, immediate=True)
 
-    for root, dirs, files in os.walk(path):
-        # Don't import subfolders if the user disabled them
-        if not recursive:
-            dirs[:] = []
-
+    # Index primary and secondary files first, if necessary
+    if file_pairs_used:
         # Index primary and secondary files in this folder
         file_pair_suffix = settings["secondMediaSuffix"]
-        # This dict maps from file names to file names with extensions
-        # For example: "image" -> "image.jpg"
-        # This avoids a nested loop, and ensures a run time of = O(n*log(n)).
-        file_ending_index = {}
-        # The two lists will be used to temporarily store file names without extensions.
-        primary_media = []
-        secondary_media = []
-        # Stores if a certain secondary media name has been matched
-        # e.g. "image_2" -> True
-        secondary_media_matched = {}
-        # This dict will map from full primary file names to full secondary file names.
-        # e.g. "image.jpg" -> "image_2.png"
+        # This dict will map from full primary file names to full secondary file names
+        # for each folder
+        # e.g. "folder": {"image.jpg": "image_2.png"}
         # It will be used by the card creation loop.
         file_pair_index = {}
-        if file_pairs_used:
+
+        for root, dirs, files in os.walk(path):
+            # Don't index subfolders if the user disabled them
+            if not recursive:
+                dirs[:] = []
+
+            file_pair_index[root] = {}
+
+            # The two lists will be used to temporarily store file names without extensions.
+            primary_media = []
+            secondary_media = []
+            # This dict maps from file names to file names with extensions
+            # For example: "image" -> "image.jpg"
+            # This avoids a nested loop, and ensures a run time of = O(n*log(n)).
+            file_ending_index = {}
+            # Stores if a certain secondary media name has been matched
+            # e.g. "image_2" -> True
+            secondary_media_matched = {}
+
             for fileName in files:
                 # Populate the file ending index
                 mediaName, ext = os.path.splitext(fileName)
@@ -152,7 +157,7 @@ def doMediaImport():
                     return
                 secondary_filename = file_ending_index[pf + file_pair_suffix]
 
-                file_pair_index[primary_filename] = secondary_filename
+                file_pair_index[root][primary_filename] = secondary_filename
                 secondary_media_matched[pf + file_pair_suffix] = True
 
             # Match previously unmatched secondary media with each other
@@ -177,10 +182,17 @@ def doMediaImport():
                         return
                     secondary_filename = file_ending_index[pf + file_pair_suffix]
 
-                    file_pair_index[primary_filename] = secondary_filename
+                    file_pair_index[root][primary_filename] = secondary_filename
                     secondary_media_matched[pf + file_pair_suffix] = True
 
-            files = list(file_pair_index.keys())
+    # Perform the actual import
+    for root, dirs, files in os.walk(path):
+        # Don't import subfolders if the user disabled them
+        if not recursive:
+            dirs[:] = []
+
+        if file_pairs_used:
+            files = list(file_pair_index[root].keys())
 
         for i, fileName in enumerate(files):
             note = notes.Note(mw.col, model)
@@ -196,7 +208,7 @@ def doMediaImport():
             internalFileName = mw.col.media.add_file(filePath)
             internalFileName_2 = ""
             if file_pairs_used:
-                filePath_2 = os.path.join(root, file_pair_index[fileName])
+                filePath_2 = os.path.join(root, file_pair_index[root][fileName])
                 internalFileName_2 = mw.col.media.add_file(filePath_2)
 
             # Now we populate each field according to the mapping selected
