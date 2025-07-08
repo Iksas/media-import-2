@@ -46,8 +46,9 @@ except ImportError:
 if __name__ != "__main__":
     from aqt import mw
 
-_pluginFolder = os.path.dirname(os.path.realpath(__file__))
-USER_DATA_FOLDER = os.path.join(_pluginFolder, "user_data/")
+_settingsFileFolder = os.path.dirname(os.path.realpath(__file__))
+_pluginRootFolder = os.path.join(_settingsFileFolder, os.pardir)
+USER_DATA_FOLDER = os.path.join(_pluginRootFolder, "user_data/")
 TRANSIENT_SETTINGS_PATH = os.path.join(USER_DATA_FOLDER, "transient_settings.json")
 
 # The settings will be accessible through the following dictionary.
