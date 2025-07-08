@@ -279,8 +279,10 @@ def doMediaImport():
     mw.deckBrowser.refresh()
     if failure:
         showFailureDialog()
-    else:
+    elif newCount > 0:
         showCompletionDialog(newCount)
+    else:
+        showZeroMediaWarning()
 
 
 class ImportSettingsDialog(QDialog):
@@ -518,14 +520,14 @@ def showCompletionDialog(newCount):
         mw,
         "Media Import Complete",
         """
-<p>
-Media import is complete and %s new notes were created.
-All generated cards are placed in the <b>MediaImport</b> deck.
-<br><br>
-Please refer to the introductory videos for instructions on
-<a href="https://www.youtube.com/watch?v=DnbKwHEQ1mA">flipping card content</a> or
-<a href="https://www.youtube.com/watch?v=F1j1Zx0mXME">modifying the appearance of cards.</a>
-</p>"""
+        <p>
+        Media import is complete and %s new notes were created.
+        All generated cards are placed in the <b>MediaImport</b> deck.
+        <br><br>
+        Please refer to the introductory videos for instructions on
+        <a href="https://www.youtube.com/watch?v=DnbKwHEQ1mA">flipping card content</a> or
+        <a href="https://www.youtube.com/watch?v=F1j1Zx0mXME">modifying the appearance of cards.</a>
+        </p>"""
         % newCount,
     )
 
@@ -535,12 +537,12 @@ def showFailureDialog():
         mw,
         "Media Import Failure",
         """
-<p>
-Failed to generate cards and no media files were imported. Please ensure the
-note type you selected is able to generate cards by using a valid
-<a href="https://docs.ankiweb.net/templates/intro.html">card template</a>.
-</p>
-""",
+        <p>
+        Failed to generate cards and no media files were imported. Please ensure the
+        note type you selected is able to generate cards by using a valid
+        <a href="https://docs.ankiweb.net/templates/intro.html">card template</a>.
+        </p>
+        """,
     )
 
 
@@ -551,18 +553,18 @@ def showMediaNameDuplicateError(rootFolder: str, mediaName: str, firstExtension:
         mw,
         "Media Import Failure",
         f"""
-<p>
-The import cannot be performed. Two files in the same folder are using the
-file name <code style="color: red;{f}">{mediaName}</code>:
-</p>
-<ul>
-<li><code>{rootFolder}{os.sep}<span style="color: red;{f}">{mediaName}</span>{firstExtension}</code></li>
-<li><code>{rootFolder}{os.sep}<span style="color: red;{f}">{mediaName}</span>{secondExtension}</code></li>
-</ul>
-<p>
-When using the <code>Media_2</code> field option, the file names (without extension) must be unique in each folder.
-</p>
-""",
+        <p>
+        The import cannot be performed. Two files in the same folder are using the
+        file name <code style="color: red;{f}">{mediaName}</code>:
+        </p>
+        <ul>
+        <li><code>{rootFolder}{os.sep}<span style="color: red;{f}">{mediaName}</span>{firstExtension}</code></li>
+        <li><code>{rootFolder}{os.sep}<span style="color: red;{f}">{mediaName}</span>{secondExtension}</code></li>
+        </ul>
+        <p>
+        When using the <code>Media_2</code> field option, the file names (without extension) must be unique in each folder.
+        </p>
+        """,
     )
 
 
@@ -573,28 +575,43 @@ def showSecondaryMediaMissingError(rootFolder: str, mediaName: str, mediaExtensi
         mw,
         "Media Import Failure",
         f"""
-<p>
-The import cannot be performed. In the media folder, the following file exists:
-</p>
-<ul>
-<li><code>{rootFolder}{os.sep}<span style="color: green;{f}">{mediaName}</span>{mediaExtension}</code></li>
-</ul>
-<p>But no matching secondary file can be found:</p>
-<ul>
-<li><code>{rootFolder}{os.sep}<span style="color: red;{f}">{mediaName}{settings["secondMediaSuffix"]}</span>.XYZ</code></li>
-</ul>
-<p>
-When using the <code>Media_2</code> field option, for every media file there must be a
-secondary media file in the same folder.
-</p>
-<p>
-If necessary, you can adjust the suffix of the secondary file (<span style="color: red;{f}">
-{settings["secondMediaSuffix"]}</span>) in the settings (go to <i>Tools -> Addons</i> and
-double-click on <i>Media Import 2</i>).
-</p>
-""",
+        <p>
+        The import cannot be performed. In the media folder, the following file exists:
+        </p>
+        <ul>
+        <li><code>{rootFolder}{os.sep}<span style="color: green;{f}">{mediaName}</span>{mediaExtension}</code></li>
+        </ul>
+        <p>But no matching secondary file can be found:</p>
+        <ul>
+        <li><code>{rootFolder}{os.sep}<span style="color: red;{f}">{mediaName}{settings["secondMediaSuffix"]}</span>.XYZ</code></li>
+        </ul>
+        <p>
+        When using the <code>Media_2</code> field option, for every media file there must be a
+        secondary media file in the same folder.
+        </p>
+        <p>
+        If necessary, you can adjust the suffix of the secondary file (<span style="color: red;{f}">
+        {settings["secondMediaSuffix"]}</span>) in the settings (go to <i>Tools -> Addons</i> and
+        double-click on <i>Media Import 2</i>).
+        </p>
+        """,
     )
 
+
+def showZeroMediaWarning():
+    warningText = """
+    <p>
+    No compatible media files were found in the specified folder.
+    </p>
+    """
+
+    if not settings["includeSubfolders"]:
+        warningText += """
+        <p>
+        If you want to import files from subfolders, remember to check the <i>include Subfolders</i> checkbox.
+        </p>
+        """
+    QMessageBox.warning(mw, "No files found", warningText)
 
 action = QAction("Media Import 2...", mw)
 action.triggered.connect(doMediaImport)  # noqa
