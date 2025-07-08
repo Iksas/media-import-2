@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# Version: 3.1.1
 #
 # This is an Anki add-on for creating notes by importing media files from a
 # user-selected folder. The user is able to map properties of the imported
