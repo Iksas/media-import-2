@@ -186,12 +186,14 @@ def doMediaImport():
 
     # Perform the actual import
     for root, dirs, files in os.walk(path):
-        # Don't import subfolders if the user disabled them
-        if not recursive:
-            dirs[:] = []
 
         if file_pairs_used:
             files = list(file_pair_index[root].keys())
+
+        # Import files in alphabetical order (by full file path)
+        # Also see https://stackoverflow.com/questions/6670029/can-i-force-os-walk-to-visit-directories-in-alphabetical-order#comment71993866_6670926
+        files.sort()
+        dirs.sort()
 
         for i, fileName in enumerate(files):
             note = notes.Note(mw.col, model)
@@ -269,7 +271,9 @@ def doMediaImport():
                 break
             newCount += 1
             mw.progress.update(value=1)
-        if failure:
+
+        # Don't import subfolders if the user disabled them
+        if not recursive or failure:
             break
 
     mw.progress.finish()
